@@ -1,0 +1,36 @@
+trigger:
+- main
+
+pool:
+  name: 'Continuous delivery - agent'
+  demands:
+  - agent.name -equals KINGKONG
+
+variables:
+  buildDirectory: 'dist'
+  productionDirectory: 'C:\Users\21265\Documents\frontend'
+
+steps:
+  - checkout: self
+
+  - task: NodeTool@0
+    inputs:
+      versionSpec: '20.x'
+    displayName: 'Installer Node.js'
+
+  - script: |
+      npm install
+    displayName: 'Installer les dépendances'
+    workingDirectory: $(Build.SourcesDirectory)
+
+  - script: |
+      echo "Démarrage du build..."
+      npm run build
+      echo "Build terminé"
+    displayName: "Build de l'application React"
+    workingDirectory: $(Build.SourcesDirectory)
+
+  - script: |
+      robocopy "$(Build.SourcesDirectory)\$(buildDirectory)" "$(productionDirectory)" /MIR 
+      if %ERRORLEVEL% LEQ 1 (exit 0) else (exit %ERRORLEVEL%)
+    displayName: "Déployer l'application React dans le répertoire de production"
